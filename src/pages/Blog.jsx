@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AOS from "aos";
@@ -6,7 +6,14 @@ import "aos/dist/aos.css";
 
 const Blog = () => {
   const queryClient = useQueryClient();
-
+  const [editId, setEditId] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    age: "",
+    profession: "",
+    isMarried: "",
+  });
+  const formRef = useRef(null);
   const { data } = useQuery({
     queryKey: ["blog"],
     queryFn: () => api.get("/blog"),
@@ -19,6 +26,14 @@ const Blog = () => {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, updatedBlog }) => api.put(`/blog/${id}`, updatedBlog),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blog"] });
+      setEditId(null); 
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/blog/${id}`),
     onSuccess: () => {
@@ -26,21 +41,44 @@ const Blog = () => {
     },
   });
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleEdit = (blog) => {
+    setEditId(blog.id);
+    setFormData({
+      name: blog.name,
+      age: blog.age,
+      profession: blog.profession,
+      isMarried: blog.isMarried ? "true" : "false",
+    });
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const body = Object.fromEntries(formData);
-    body.isMarried = body.isMarried === "true"; 
-    postMutation.mutate(body);
-    e.target.reset(); 
+    const blogData = {
+      ...formData,
+      isMarried: formData.isMarried === "true",
+    };
+
+    if (editId) {
+      updateMutation.mutate({ id: editId, updatedBlog: blogData });
+    } else {
+      postMutation.mutate(blogData);
+    }
+
+    setFormData({ name: "", age: "", profession: "", isMarried: "" });
+    setEditId(null);
   };
 
   const handleDelete = (id) => {
     deleteMutation.mutate(id);
-  };
-
-  const handleChange = (id) => {
-    console.log("Update blog with ID:", id);
   };
 
   useEffect(() => {
@@ -51,23 +89,68 @@ const Blog = () => {
     <div className="max-w-[1200px] mx-auto px-3 my-[60px]">
       <h2 className="text-[36px] font-semibold text-center mb-10">Blog</h2>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 mb-10 max-sm:flex max-sm:flex-col">
-        <input name="name" type="text" placeholder="Name" required className="border p-2 rounded outline-none shadow-[0px_0px_10px_2px_#5900ac] border-violet-600" />
-        <input name="age" type="number" placeholder="Age" required className="border p-2 rounded outline-none shadow-[0px_0px_10px_2px_#5900ac] border-violet-600" />
-        <input name="profession" type="text" placeholder="Profession" required className="border p-2 rounded outline-none shadow-[0px_0px_10px_2px_#5900ac] border-violet-600" />
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-2 gap-4  mb-10 max-sm:flex max-sm:flex-col"
+      >
+        <input
+          ref={formRef}
+          name="name"
+          type="text"
+          placeholder="Name"
+          required
+          value={formData.name}
+          onChange={handleChange}
+          className="border p-2 rounded outline-none shadow-[0px_0px_10px_2px_#5900ac] border-violet-600"
+        />
+        <input
+          name="age"
+          type="number"
+          placeholder="Age"
+          required
+          value={formData.age}
+          onChange={handleChange}
+          className="border p-2 rounded outline-none shadow-[0px_0px_10px_2px_#5900ac] border-violet-600"
+        />
+        <input
+          name="profession"
+          type="text"
+          placeholder="Profession"
+          required
+          value={formData.profession}
+          onChange={handleChange}
+          className="border p-2 rounded outline-none shadow-[0px_0px_10px_2px_#5900ac] border-violet-600"
+        />
         <div className="flex items-center gap-6">
           <label className="font-medium">Married?</label>
           <div className="flex gap-6 mt-2">
             <label>
-              <input type="radio" name="isMarried" value="true" required /> Yes
+              <input
+                type="radio"
+                name="isMarried"
+                value="true"
+                checked={formData.isMarried === "true"}
+                onChange={handleChange}
+              />{" "}
+              Yes
             </label>
             <label>
-              <input type="radio" name="isMarried" value="false" required /> No
+              <input
+                type="radio"
+                name="isMarried"
+                value="false"
+                checked={formData.isMarried === "false"}
+                onChange={handleChange}
+              />{" "}
+              No
             </label>
           </div>
         </div>
-        <button type="submit" className="col-span-2 bg-violet-600 text-white py-2 rounded hover:bg-violet-800 duration-300 cursor-pointer">
-          Submit
+        <button
+          type="submit"
+          className="col-span-2 bg-violet-600 text-white py-2 rounded hover:bg-violet-800 duration-300 cursor-pointer"
+        >
+          {editId ? "Update Blog" : "Submit Blog"}
         </button>
       </form>
 
@@ -87,17 +170,25 @@ const Blog = () => {
             </div>
             <div className="flex justify-between mt-2">
               <h3 className="text-[20px] font-semibold">{blog?.name}</h3>
-              <p className="text-[20px] font-semibold text-green-800">{blog?.age}</p>
+              <p className="text-[20px] font-semibold text-green-800">
+                {blog?.age}
+              </p>
             </div>
             <div className="flex justify-between">
-              <p className={`text-[20px] font-semibold ${blog?.isMarried ? "text-green-500" : "text-red-500"}`}>
+              <p
+                className={`text-[20px] font-semibold ${
+                  blog?.isMarried ? "text-green-500" : "text-red-500"
+                }`}
+              >
                 {blog?.isMarried ? "Married" : "NoMarried"}
               </p>
-              <p className="text-[20px] font-semibold text-green-900">{blog?.profession}</p>
+              <p className="text-[20px] font-semibold text-green-900">
+                {blog?.profession}
+              </p>
             </div>
             <div className="flex justify-between gap-4 mt-2">
               <button
-                onClick={() => handleChange(blog?.id)}
+                onClick={() => handleEdit(blog)}
                 className="w-full h-[40px] bg-green-600 hover:bg-green-800 text-white rounded-[5px] cursor-pointer"
               >
                 Update
