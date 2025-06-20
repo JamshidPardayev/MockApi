@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="max-w-[1200px] px-3 mx-auto bg-gray-900 text-white py-6 text-sm mt-auto">
-      <div className="container mx-auto px-4 text-center md:text-left">
+    <footer className=" bg-gray-900 text-white py-6 text-sm mt-auto">
+      <div className="max-w-[1200px] px-3 mx-auto text-center md:text-left">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="hover:text-gray-300 duration-300 cursor-pointer">MyWebsite. Barcha huquqlar himoyalangan.</p>
 

@@ -1,22 +1,22 @@
 import { Button } from "antd";
 import { Link } from "react-router-dom";
-
+import logo from "../../../src/assets/logo.png"
 const Header = () => {
   return (
-    <div className="shadow-xl">
+    <div className="shadow-xl ">
       <div className=" max-w-[1200px] justify-between mx-auto h-[100px] px-3 flex items-center gap-3">
         <img
-          src="../../public/logo.png"
+          src={logo}
           alt="logo"
           className="h-[100px] w-[200px]"
         />
         <ul className="flex gap-5">
           <li>
-            <Link to={"/"} className="text-[18px] font-semibold hover:text-gray-800 duration-300 cursor-pointer">Home</Link>
+            <Link to={"/"} className="text-[18px] font-semibold hover:text-gray-800 duration-300 cursor-pointer">Blog</Link>
           </li>
-          <li>
+          {/* <li>
             <Link to={"/blog"} className="text-[18px] font-semibold hover:text-gray-800 duration-300 cursor-pointer">Blog</Link>
-          </li>
+          </li> */}
         </ul>
       </div>
     </div>
